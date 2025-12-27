@@ -10,43 +10,6 @@
  * - PORTAL_UPDATES (KV Namespace)
  */
 
-// --- ENVIRONMENT VARIABLE LOADING (dotenv for local dev) ---
-
-/**
- * Resolves environment variables with fallback priority:
- * 1. env parameter (Cloudflare Workers runtime) - highest priority
- * 2. process.env (from dotenv loaded externally or wrangler) - fallback for local development
- * 
- * Note: For local development, dotenv should be loaded via:
- * - wrangler dev --env-file=workers/workers.env
- * - Or external process that populates process.env before worker runs
- * 
- * @param {Object} env - Environment object from Cloudflare Workers
- * @param {string} key - Environment variable key
- * @returns {string|undefined} - Environment variable value
- */
-function resolveEnv(env, key) {
-  // Prefer env parameter (Cloudflare Workers runtime)
-  if (env && env[key] !== undefined && env[key] !== null && env[key] !== '') {
-    return env[key];
-  }
-  
-  // Fallback to process.env (from dotenv loaded externally or wrangler for local dev)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    let value = process.env[key];
-    // Remove surrounding quotes if present (common in .env files)
-    if (typeof value === 'string' && value.length >= 2) {
-      if ((value.startsWith('"') && value.endsWith('"')) || 
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-    }
-    return value;
-  }
-  
-  return undefined;
-}
-
 // --- UTILS ---
 
 const corsHeaders = {
@@ -150,8 +113,8 @@ export default {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    client_id: resolveEnv(env, 'GITHUB_CLIENT_ID'),
-                    client_secret: resolveEnv(env, 'GITHUB_CLIENT_SECRET'),
+                    client_id: env.GITHUB_CLIENT_ID,
+                    client_secret: env.GITHUB_CLIENT_SECRET,
                     code
                 })
             });
@@ -200,7 +163,7 @@ export default {
                 role: role, 
                 iat: Math.floor(Date.now() / 1000),
                 exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
-            }, resolveEnv(env, 'JWT_SECRET'));
+            }, env.JWT_SECRET);
 
             return jsonResponse({ token, user: username, role });
 
@@ -213,13 +176,13 @@ export default {
     if (method === 'POST' && url.pathname === '/api/auth/admin') {
         const { password } = await request.json();
         
-        if (password === resolveEnv(env, 'ADMIN_PASSWORD')) {
+        if (password === env.ADMIN_PASSWORD) {
             const token = await signJwt({ 
                 sub: 'Sunyata', 
                 role: 'admin', 
                 iat: Math.floor(Date.now() / 1000),
                 exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24)
-            }, resolveEnv(env, 'JWT_SECRET'));
+            }, env.JWT_SECRET);
             
             return jsonResponse({ token, user: 'Sunyata', role: 'admin' });
         }
@@ -234,7 +197,7 @@ export default {
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
-        userClaims = await verifyJwt(token, resolveEnv(env, 'JWT_SECRET'));
+        userClaims = await verifyJwt(token, env.JWT_SECRET);
     }
 
     // Helper to get KV List
