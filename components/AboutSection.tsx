@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { PaperCard, PaperBadge, PaperModal, PaperButton } from './PaperComponents';
 import { FileText, User, BookOpen, Layers, Zap, Image as ImageIcon, Loader, Download, AlertCircle, Maximize2, X, Database, Cpu, GitBranch } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import dotenv from 'dotenv';
+
+env = dotenv.config();
 
 const PROMPTS = [
   {
@@ -59,7 +62,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ isAuthenticated }) => {
         const randomSelection = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
         setSelectedStyle(randomSelection.style);
 
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         let base64String = null;
 
         if (selectedModel.startsWith('imagen')) {
