@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MetaCogna.AI</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Polyfill for process.env to prevent crashes in browser environments -->
+    <script>
+      window.process = { env: {} };
+    </script>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              ink: 'rgb(var(--color-ink) / <alpha-value>)', 
+              paper: 'rgb(var(--color-paper) / <alpha-value>)', 
+              accent: 'rgb(var(--color-accent) / <alpha-value>)', 
+              surface: 'rgb(var(--color-surface) / <alpha-value>)', 
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['Inter', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            boxShadow: {
+              hard: '4px 4px 0px 0px rgb(var(--color-shadow))',
+              'hard-hover': '6px 6px 0px 0px rgb(var(--color-shadow))',
+              'hard-sm': '2px 2px 0px 0px rgb(var(--color-shadow))',
+            },
+            backgroundImage: {
+              'dot-pattern': 'radial-gradient(rgb(var(--color-dot)) 1px, transparent 1px)',
+            },
+            backgroundSize: {
+              'dot-pattern': '24px 24px',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --color-ink: 24 24 27; /* Zinc 900 #18181b */
+        --color-paper: 255 255 255; /* White */
+        --color-surface: 244 244 245; /* Zinc 100 #f4f4f5 */
+        --color-accent: 16 185 129; /* Emerald 500 #10b981 */
+        --color-shadow: 24 24 27; /* Zinc 900 */
+        --color-dot: 228 228 231; /* Zinc 200 #e4e4e7 */
+      }
+      
+      .dark {
+        --color-ink: 244 244 245; /* Zinc 100 */
+        --color-paper: 24 24 27; /* Zinc 900 */
+        --color-surface: 9 9 11; /* Zinc 950 #09090b */
+        --color-accent: 52 211 153; /* Emerald 400 #34d399 */
+        --color-shadow: 0 0 0; /* Black */
+        --color-dot: 39 39 42; /* Zinc 800 */
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 5rem; /* Offset for fixed header */
+      }
+      body {
+        background-color: rgb(var(--color-surface));
+        color: rgb(var(--color-ink));
+        background-image: radial-gradient(rgb(var(--color-dot)) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      /* Custom Scrollbar for that technical feel */
+      ::-webkit-scrollbar {
+        width: 12px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgb(var(--color-surface));
+        border-left: 2px solid rgb(var(--color-ink));
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgb(var(--color-ink));
+        border: 2px solid rgb(var(--color-surface));
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgb(var(--color-accent));
+      }
+    </style>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
