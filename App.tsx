@@ -215,30 +215,17 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // 0. Dev Bypass
-    const meta = import.meta as any;
-    const isDev = meta.env && meta.env.DEV;
-    
-    if (isDev) {
-         console.log("DEV MODE: Bypassing authentication for rapid development.");
-         // Check if we are already logged in to avoid overwriting/reloading unnecessary state
-         const storedUser = localStorage.getItem('metacogna_user');
-         if (!storedUser) {
-             handleLoginSuccess('Dev_Admin', 'admin', 'dev-bypass-token');
-             return; // State update triggers re-render, effectively handling the flow
-         }
-    }
-
     // 1. Check for existing session
     const storedUser = localStorage.getItem('metacogna_user');
     const storedRole = localStorage.getItem('metacogna_role');
     const storedToken = localStorage.getItem('metacogna_token');
 
     if (storedUser && storedToken) {
-        // If they were logged in, default them to portal unless they were deep linked elsewhere
+        // Restore user state but keep them on landing page
+        // User must click login button to access portal
         setCurrentUser(storedUser);
         setUserRole((storedRole as UserRole) || 'associate');
-        setCurrentView('portal');
+        // Keep currentView as 'landing' - don't auto-redirect
     }
 
     // 2. Check for GitHub OAuth Code Callback

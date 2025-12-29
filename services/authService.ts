@@ -55,7 +55,7 @@ export const loginAdmin = async (password: string): Promise<AuthResponse> => {
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
 
         // Hardcoded demo credentials
-        if (cleanPass.toLowerCase() === 'entropy' || cleanPass.toLowerCase() === 'clarity') {
+        if (cleanPass.toLowerCase() === 'entropy' || cleanPass.toLowerCase() === 'entropy123' || cleanPass.toLowerCase() === 'clarity') {
             return {
                 token: 'mock-admin-token-local-' + Date.now(),
                 user: 'Sunyata',

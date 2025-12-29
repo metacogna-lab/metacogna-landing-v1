@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Github, Lock, AlertTriangle, FileKey, CheckCircle, Loader, KeyRound, ArrowRight, Upload, Scan } from 'lucide-react';
 import { PaperButton } from './PaperComponents';
 import { loginAdmin, GITHUB_CLIENT_ID } from '../services/authService';
+import LorenzAttractor from './LorenzAttractor';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -164,7 +165,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                     >
                         {/* LEFT: Multi-Step Admin Login */}
                         <div 
-                            className={`w-full md:w-1/2 relative flex flex-col items-center justify-center p-6 border-b-2 md:border-b-0 md:border-r-2 border-ink transition-colors duration-300 ${
+                            className={`w-full md:w-1/2 relative flex flex-col items-center justify-center p-6 border-b-2 md:border-b-0 md:border-r-2 border-ink transition-colors duration-300 overflow-hidden ${
                                 isDragging ? 'bg-accent text-ink' : 'bg-[#0a0a0a] text-gray-400'
                             }`}
                             onDragOver={(e) => { 
@@ -176,6 +177,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={loginStage === 'upload' ? handleDrop : undefined}
                         >
+                            {/* Lorenz Attractor Background - Highly Visible */}
+                            <div className="absolute inset-0 opacity-80 pointer-events-none z-0">
+                                <LorenzAttractor className="w-full h-full" />
+                            </div>
                             <div className="absolute inset-0 bg-dot-pattern opacity-10 pointer-events-none" />
                             
                             <AnimatePresence mode="wait">
@@ -291,7 +296,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                                                 </div>
                                                 <h3 className="font-serif text-xl font-bold text-gray-200 mb-2 group-hover:text-white transition-colors">Visual Key</h3>
                                                 <p className="font-mono text-xs max-w-[200px] mx-auto leading-relaxed mb-4 text-gray-400">
-                                                    Drop <span className="text-accent">Visual Key File</span> or click to upload to initiate admin protocol.
+                                                    Upload encrypted steganographic file.
                                                 </p>
                                                 <p className="font-mono text-[10px] text-gray-600">STEP 1/2</p>
 
