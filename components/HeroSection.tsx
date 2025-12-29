@@ -108,7 +108,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExploreServices }) => {
                 <div className="font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-4">
                     <p className="text-gray-400 dark:text-gray-500 select-none"># Why do we do this?</p>
                     <p>
-                        > We are motivated by a <span className="bg-accent text-paper dark:text-ink px-2 py-1 text-lg border-b-2 border-ink font-bold inline-block transform -rotate-2 shadow-sm">quiet awe</span> of the universe.
+                        &gt; We are motivated by a <span className="bg-accent text-paper dark:text-ink px-2 py-1 text-lg border-b-2 border-ink font-bold inline-block transform -rotate-2 shadow-sm">quiet awe</span> of the universe.
                     </p>
                     <div className="min-h-[4.5em]">
                         <span className={isGlitching ? 'glitch-text text-accent font-bold' : ''} data-text={typedText}>

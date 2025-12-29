@@ -39,7 +39,7 @@ const MermaidSolutions: React.FC<MermaidSolutionsProps> = ({ code, onExecute, te
                                 ) : line.includes('-->') ? (
                                     <span>
                                         <span className="text-blue-300">{line.split('-->')[0]}</span>
-                                        <span className="text-accent font-bold">--></span>
+                                        <span className="text-accent font-bold">--&gt;</span>
                                         <span className="text-yellow-300">{line.split('-->')[1]}</span>
                                     </span>
                                 ) : (
