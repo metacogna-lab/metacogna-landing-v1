@@ -38,9 +38,21 @@ const Header: React.FC<{
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const runProjects = [
-    { label: 'Compilar', href: 'https://compilar.app' },
-    { label: 'MetaGoal', href: 'https://app.metacogna.ai' },
-    { label: 'Debate Sense (Early Dev)', href: 'https://debate-sense-615cf021.base44.app' },
+    { 
+      label: 'Compilar', 
+      href: 'https://compilar.app',
+      tagline: 'Turns labyrinthine AI builds into a single satisfyingly green RUN button.',
+    },
+    { 
+      label: 'MetaGoal', 
+      href: 'https://app.metacogna.ai',
+      tagline: 'Translates AI ambition into one checklist your COO might actually finish.',
+    },
+    { 
+      label: 'Debate Sense (Early Dev)', 
+      href: 'https://debate-sense-615cf021.base44.app',
+      tagline: 'Lets debating machine philosophers settle it so you get the obvious next move.',
+    },
   ];
 
   const isPortal = currentView.startsWith('portal') || currentView === 'decisions';
@@ -106,7 +118,7 @@ const Header: React.FC<{
                   className="flex flex-col px-3 py-2 hover:bg-accent/30 transition-colors text-left"
                 >
                   <span className="text-ink font-semibold">{project.label}</span>
-                  <span className="text-xs text-ink/70">{project.href.replace('https://', '')}</span>
+                  <span className="text-xs text-ink/70">{project.tagline}</span>
                 </a>
               ))}
             </div>
@@ -191,7 +203,7 @@ const Header: React.FC<{
                   className="block px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors"
                 >
                   <div className="text-sm font-semibold">{project.label}</div>
-                  <div className="text-xs text-ink/70">{project.href}</div>
+                  <div className="text-xs text-ink/70">{project.tagline}</div>
                 </a>
               ))}
             </div>
