@@ -30,6 +30,7 @@ type RunProject = {
   label: string;
   href: string;
   description: string;
+  tagline: string;
 };
 
 const RUN_PROJECTS: RunProject[] = [
@@ -37,16 +38,19 @@ const RUN_PROJECTS: RunProject[] = [
     label: 'Compilar',
     href: 'https://compilar.app',
     description: 'Rapidly compiles agent pipelines into enterprise-safe workflows with audit trails and deployment handoff.',
+    tagline: 'Turns labyrinthine AI builds into a single satisfyingly green RUN button.',
   },
   {
     label: 'MetaGoal',
     href: 'https://app.metacogna.ai',
     description: 'Operational cockpit that translates AI bets into measurable OKRs, approvals, and delivery cadences.',
+    tagline: 'Translates AI ambition into one checklist your COO might actually finish.',
   },
   {
     label: 'Debate Sense (Early Dev)',
     href: 'https://debate-sense-615cf021.base44.app',
     description: 'Sensemaking stack for argument intelligence so leadership can interrogate tradeoffs in real time.',
+    tagline: 'Lets debating machine philosophers settle it so you get the obvious next move.',
   },
 ];
 
@@ -129,7 +133,7 @@ const Header: React.FC<{
                   className="flex flex-col w-full px-3 py-2 hover:bg-accent/30 transition-colors text-left"
                 >
                   <span className="text-ink font-semibold">{project.label}</span>
-                  <span className="text-xs text-ink/70">{project.href.replace('https://', '')}</span>
+                  <span className="text-xs text-ink/70">{project.tagline}</span>
                 </button>
               ))}
             </div>
@@ -216,7 +220,7 @@ const Header: React.FC<{
                   className="block w-full px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors text-left"
                 >
                   <div className="text-sm font-semibold">{project.label}</div>
-                  <div className="text-xs text-ink/70">{project.href}</div>
+                  <div className="text-xs text-ink/70">{project.tagline}</div>
                 </button>
               ))}
             </div>
