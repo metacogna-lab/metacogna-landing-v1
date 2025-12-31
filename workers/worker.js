@@ -1,4 +1,6 @@
 
+import { Ai } from '@cloudflare/ai';
+
 /**
  * CLOUDFLARE WORKER: MetaCogna API & Auth Gateway
  * 
@@ -8,6 +10,7 @@
  * - JWT_SECRET
  * - ADMIN_PASSWORD (for the Steganography flow)
  * - PORTAL_UPDATES (KV Namespace)
+ * - AI binding (optional but recommended)
  */
 
 // --- UTILS ---
@@ -440,6 +443,31 @@ export default {
         return payload;
     }
 
+    async function summarizeWebhook(body) {
+        if (!env.AI) {
+            return `Received webhook payload: ${JSON.stringify(body).slice(0, 1800)}`;
+        }
+        try {
+            const ai = new Ai(env.AI);
+            const response = await ai.run('@cf/meta/llama-3.1-8b-instruct', {
+                messages: [
+                    { role: 'system', content: 'You are a concise operations analyst. Summarize incoming webhook payloads in two brief sentences. Focus on actionable changes.' },
+                    { role: 'user', content: JSON.stringify(body) }
+                ]
+            });
+            if (response && response.response) {
+                return response.response.trim();
+            }
+            if (Array.isArray(response?.result?.output_text)) {
+                return response.result.output_text.join(' ').trim();
+            }
+            return `Webhook summary unavailable. Inspect payload: ${JSON.stringify(body).slice(0, 1200)}`;
+        } catch (err) {
+            console.error('AI summarization failed', err);
+            return `Webhook summary unavailable. Inspect payload: ${JSON.stringify(body).slice(0, 1200)}`;
+        }
+    }
+
     async function getCachedData(key, fallback) {
         const cached = await env.PORTAL_UPDATES.get(key);
         if (cached) {
@@ -679,6 +707,39 @@ export default {
             console.error('Notion fetch failed', err);
             return jsonResponse([]);
         }
+    }
+
+    // POST /api/webhooks
+    if (method === 'POST' && url.pathname === '/api/webhooks') {
+        const body = await request.json().catch(() => ({}));
+        const eventPayload = {
+            receivedAt: new Date().toISOString(),
+            body,
+            headers: Object.fromEntries(request.headers)
+        };
+
+        await env.PORTAL_UPDATES.put(`WEBHOOK_${Date.now()}`, JSON.stringify(eventPayload), { expirationTtl: 60 * 60 * 24 });
+
+        const summary = await summarizeWebhook(body);
+        const list = await getUpdatesList();
+        const update = {
+            id: `webhook-${Date.now()}`,
+            title: body?.title || body?.subject || 'External Update',
+            content: summary,
+            date: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            type: 'progress',
+            confidence: 'medium',
+            visibility: 'both',
+            priority: 'medium',
+            author: body?.author || 'automation',
+            tags: body?.tags || ['webhook']
+        };
+        list.unshift(update);
+        if (list.length > 100) list.pop();
+        await env.PORTAL_UPDATES.put('UPDATES_LIST', JSON.stringify(list));
+
+        return jsonResponse({ success: true, summary });
     }
 
     return errorResponse('Not Found', 404);

@@ -2,9 +2,9 @@ name = "metacogna-ai-worker"
 main = "worker.js"
 compatibility_date = "2024-06-08"
 
-[env.production]
+[env]
 route = "kv.metacogna.ai/*"
-workers_dev = false
+
 
 [vars]
 GITHUB_CLIENT_ID = "Ov23livjqbqkI6n1BvYF"
@@ -25,3 +25,6 @@ id = "b8047f15afdb4aa9ace07c4cc5080c29"
 binding = "PORTAL_DB"
 database_name = "metacogna-portal"
 database_id = "75e3fd65-a847-4467-8fde-ea1722564167"
+
+[ai]
+binding = "AI"
