@@ -1,8 +1,8 @@
 
-import { jsPDF } from "jspdf";
 import { metacognaProfile } from "../data/profile";
 
-export const generateProspectusPDF = () => {
+export const generateProspectusPDF = async () => {
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     
     // --- CONFIGURATION ---

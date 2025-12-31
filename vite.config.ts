@@ -11,12 +11,25 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'import.meta.env.BASE_API_URL': JSON.stringify(env.VITE_BASE_API_URL),
+        'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || ''),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+        }
+      },
+      build: {
+        chunkSizeWarningLimit: 1200,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              react: ['react', 'react-dom', 'react-oidc-context'],
+              motion: ['framer-motion'],
+              icons: ['lucide-react'],
+              pdfkit: ['jspdf']
+            }
+          }
         }
       }
     };

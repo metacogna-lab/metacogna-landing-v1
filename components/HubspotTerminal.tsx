@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Database, AlertCircle } from 'lucide-react';
 import { metacognaProfile } from '../data/profile';
-import { generateProspectusPDF } from '../services/pdfGenerator';
 
 interface HubspotTerminalProps {
     isOpen: boolean;
@@ -26,7 +25,7 @@ const HubspotTerminal: React.FC<HubspotTerminalProps> = ({ isOpen, onClose, onSu
         setStatus('transmitting');
 
         // Mocking Network Delay and API Call
-        setTimeout(() => {
+        setTimeout(async () => {
             const payload = {
                 ...formData,
                 timestamp: new Date().toISOString(),
@@ -45,7 +44,8 @@ const HubspotTerminal: React.FC<HubspotTerminalProps> = ({ isOpen, onClose, onSu
 
             // Trigger Client-Side Generation
             try {
-                generateProspectusPDF();
+                const { generateProspectusPDF } = await import('../services/pdfGenerator');
+                await generateProspectusPDF();
             } catch (err) {
                 console.error("PDF Generation Failed:", err);
             }
