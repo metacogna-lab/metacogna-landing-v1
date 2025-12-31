@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2024-06-08"
 
 [env.production]
-route = "api.metacogna.ai"
+route = "kv.metacogna.ai/*"
 workers_dev = false
 
 [vars]
@@ -12,9 +12,16 @@ GITHUB_CLIENT_SECRET = "58b76b5b244c565153b345e22057507a2436792b"
 JWT_SECRET = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"
 ADMIN_PASSWORD = "entropy"
 PORTAL_UPDATES_ID = "b8047f15afdb4aa9ace07c4cc5080c29"
+LINEAR_API_KEY = ""
+NOTION_API_KEY = ""
+NOTION_DATABASE_ID = ""
 
 [[kv_namespaces]]
 binding = "PORTAL_UPDATES"
 id = "b8047f15afdb4aa9ace07c4cc5080c29"
 # to deploy to prod, set id for production KV namespace
 
+[[d1_databases]]
+binding = "PORTAL_DB"
+database_name = "metacogna-portal"
+database_id = ""

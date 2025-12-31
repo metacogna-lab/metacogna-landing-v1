@@ -153,7 +153,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ isAuthenticated }) => {
         let base64String = null;
 
         if (selectedProvider === 'google') {
-            const apiKey = process.env.API_KEY || (import.meta as any).env?.VITE_GOOGLE_API_KEY;
+            const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
             
             // Fallback Trigger if no key
             if (!apiKey) {

@@ -14,7 +14,7 @@ import HubspotTerminal from './components/HubspotTerminal';
 import Toast from './components/Toast';
 import { Menu, Github, Loader, Moon, Sun } from 'lucide-react';
 import { UserRole } from './types';
-import { exchangeGithubCode } from './services/authService';
+import { exchangeGithubCode, fetchSession, logoutSession } from './services/authService';
 
 // Lazy load portal components to optimize landing page performance
 const PortalDashboard = lazy(() => import('./components/PortalDashboard'));
@@ -42,6 +42,12 @@ const RUN_PROJECTS: RunProject[] = [
     tagline: 'Takes 15 years of social dynamics research and ships it like a co-op game with cheat codes.',
   },
   {
+    label: 'Aware',
+    href: 'https://aware.metacogna.ai',
+    description: 'Upload your project documents, surface hidden links, and experience metacognition with a background Supervizor.',
+    tagline: 'Uploads your war-room binder and lets a background Supervizor whisper why page 3 ruins sprint 12.',
+  },
+  {
     label: 'MetaGoal',
     href: 'https://app.metacogna.ai',
     description: 'A “Metacognitive Agent” that digests your interactions and docs, nudging you toward goals while prep work for external tool hooks continues.',
@@ -64,6 +70,7 @@ const RUN_PROJECTS: RunProject[] = [
 
 const Header: React.FC<{ 
     onLoginClick: () => void; 
+    onLogoutClick: () => void;
     onContactClick: () => void;
     currentView: string;
     onChangeView: (v: any) => void;
@@ -71,7 +78,8 @@ const Header: React.FC<{
     onToggleTheme: () => void;
     runProjects: RunProject[];
     onRunProjectSelect: (project: RunProject) => void;
-}> = ({ onLoginClick, onContactClick, currentView, onChangeView, isDark, onToggleTheme, runProjects, onRunProjectSelect }) => {
+    isAuthenticated: boolean;
+}> = ({ onLoginClick, onLogoutClick, onContactClick, currentView, onChangeView, isDark, onToggleTheme, runProjects, onRunProjectSelect, isAuthenticated }) => {
   
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -196,7 +204,13 @@ const Header: React.FC<{
               </a>
           </div>
 
-          {!isPortal && <PaperButton size="sm" variant="secondary" onClick={onLoginClick}>LOGIN</PaperButton>}
+          {!isPortal && (
+            isAuthenticated ? (
+              <PaperButton size="sm" variant="secondary" onClick={onLogoutClick}>LOGOUT</PaperButton>
+            ) : (
+              <PaperButton size="sm" variant="secondary" onClick={onLoginClick}>LOGIN</PaperButton>
+            )
+          )}
         </nav>
 
         <div className="md:hidden flex items-center gap-4">
@@ -263,9 +277,15 @@ const Header: React.FC<{
               </a>
             </div>
             {!isPortal && (
-              <PaperButton size="sm" variant="secondary" onClick={() => { setIsMobileMenuOpen(false); onLoginClick(); }}>
-                LOGIN
-              </PaperButton>
+              isAuthenticated ? (
+                <PaperButton size="sm" variant="secondary" onClick={() => { setIsMobileMenuOpen(false); onLogoutClick(); }}>
+                  LOGOUT
+                </PaperButton>
+              ) : (
+                <PaperButton size="sm" variant="secondary" onClick={() => { setIsMobileMenuOpen(false); onLoginClick(); }}>
+                  LOGIN
+                </PaperButton>
+              )
             )}
           </div>
         </div>
@@ -287,6 +307,7 @@ const App: React.FC = () => {
   // Serious Mode States
   const [isHubspotOpen, setIsHubspotOpen] = useState(false);
   const [isToastVisible, setIsToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('DISPATCHED');
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
   const [selectedRunProject, setSelectedRunProject] = useState<RunProject | null>(null);
   const [asciiArt, setAsciiArt] = useState('');
@@ -395,14 +416,10 @@ const App: React.FC = () => {
     const storedToken = localStorage.getItem('metacogna_token');
 
     if (storedUser && storedToken) {
-        // Restore user state but keep them on landing page
-        // User must click login button to access portal
         setCurrentUser(storedUser);
         setUserRole((storedRole as UserRole) || 'associate');
-        // Keep currentView as 'landing' - don't auto-redirect
     }
 
-    // 2. Check for GitHub OAuth Code Callback
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
 
@@ -410,6 +427,46 @@ const App: React.FC = () => {
         authCodeProcessed.current = true;
         handleGithubCallback(code);
     }
+
+    const resumeSession = async () => {
+        try {
+            const session = await fetchSession();
+            localStorage.setItem('metacogna_user', session.user);
+            localStorage.setItem('metacogna_role', session.role);
+            localStorage.setItem('metacogna_token', session.token);
+            setCurrentUser(session.user);
+            setUserRole(session.role as UserRole);
+        } catch (err) {
+            // No active cookie-backed session
+        }
+    };
+
+    const handleSsoParams = async () => {
+        const provider = urlParams.get('sso_provider');
+        const state = urlParams.get('state');
+        const status = urlParams.get('sso_status') || 'success';
+        if (!provider || !state) return;
+        try {
+            await fetch(`/api/sso/callback?provider=${encodeURIComponent(provider)}&state=${encodeURIComponent(state)}&status=${encodeURIComponent(status)}`, {
+                method: 'GET',
+                credentials: 'include',
+            });
+            setToastMessage(`${provider.toUpperCase()} SSO ${status === 'success' ? 'ready' : 'returned'}`);
+        } catch (err) {
+            setToastMessage(`${provider.toUpperCase()} SSO failed`);
+        } finally {
+            setIsToastVisible(true);
+            urlParams.delete('sso_provider');
+            urlParams.delete('sso_status');
+            urlParams.delete('state');
+            const newSearch = urlParams.toString();
+            const cleanUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    };
+
+    resumeSession();
+    handleSsoParams();
   }, []);
 
   const handleLogout = () => {
@@ -418,6 +475,7 @@ const App: React.FC = () => {
       localStorage.removeItem('metacogna_user');
       localStorage.removeItem('metacogna_role');
       localStorage.removeItem('metacogna_token');
+      logoutSession().catch(() => {});
   };
 
   const runProjectModal = (
@@ -478,6 +536,7 @@ const App: React.FC = () => {
         <div className="min-h-screen bg-surface">
              <Header 
                 onLoginClick={() => {}} 
+                onLogoutClick={handleLogout}
                 onContactClick={() => setIsContactOpen(true)} 
                 currentView={currentView}
                 onChangeView={setCurrentView}
@@ -485,6 +544,7 @@ const App: React.FC = () => {
                 onToggleTheme={toggleTheme}
                 runProjects={RUN_PROJECTS}
                 onRunProjectSelect={handleRunProjectSelect}
+                isAuthenticated={!!currentUser}
              />
              <main className="pt-16">
                  <Suspense fallback={
@@ -514,6 +574,7 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col text-ink font-sans selection:bg-accent selection:text-ink transition-colors duration-300">
       <Header 
         onLoginClick={() => setIsLoginOpen(true)} 
+        onLogoutClick={handleLogout}
         onContactClick={() => setIsContactOpen(true)} 
         currentView={currentView}
         onChangeView={setCurrentView}
@@ -521,6 +582,7 @@ const App: React.FC = () => {
         onToggleTheme={toggleTheme}
         runProjects={RUN_PROJECTS}
         onRunProjectSelect={handleRunProjectSelect}
+        isAuthenticated={!!currentUser}
       />
       
       <LoginModal 
@@ -535,11 +597,15 @@ const App: React.FC = () => {
       <HubspotTerminal 
         isOpen={isHubspotOpen} 
         onClose={() => setIsHubspotOpen(false)} 
-        onSuccess={() => { setIsHubspotOpen(false); setIsToastVisible(true); }}
+        onSuccess={() => { 
+            setIsHubspotOpen(false); 
+            setToastMessage('Dispatch successful'); 
+            setIsToastVisible(true); 
+        }}
       />
       
       <Toast 
-        message="DISPATCHED" 
+        message={toastMessage} 
         isVisible={isToastVisible} 
         onClose={() => setIsToastVisible(false)} 
       />

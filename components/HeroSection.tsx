@@ -79,9 +79,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExploreServices }) => {
         
         <div className="font-sans text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-5xl mx-auto leading-relaxed font-bold flex flex-wrap justify-center items-center gap-y-2">
           <MorphingSeparator />
-          <span className="whitespace-nowrap">Chaos Meets Creativity</span>
+          <span className="whitespace-nowrap bg-transparent text-ink dark:text-gray-200">Chaos Meets Creativity</span>
           <MorphingSeparator />
-          <span className="whitespace-nowrap">Abstraction Made Concrete</span>
+          <span className="whitespace-nowrap bg-transparent text-ink dark:text-gray-200">Abstraction Made Concrete</span>
           <MorphingSeparator />
         </div>
 

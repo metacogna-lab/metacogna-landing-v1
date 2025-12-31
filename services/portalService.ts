@@ -1,5 +1,5 @@
 
-import { PortalUpdate, Comment } from '../types';
+import { PortalUpdate, Comment, PortalGoal, ToolLinkResponse, SearchResponse, StatusResponse, LinearTask, NotionPage, OrgMatrixRow } from '../types';
 
 // Mock Data for fallback
 const MOCK_UPDATES: PortalUpdate[] = [
@@ -76,7 +76,7 @@ export const fetchUpdates = async (): Promise<PortalUpdate[]> => {
         // If no token, default to fallback immediately
         if (!headers.Authorization) throw new Error("No token");
 
-        const res = await fetch('/api/portal/updates', { headers });
+        const res = await fetch('/api/portal/updates', { headers, credentials: 'include' });
         
         if (!res.ok) throw new Error(`API Error: ${res.status}`);
         
@@ -138,4 +138,106 @@ export const addComment = async (id: string, comment: Comment): Promise<Comment[
             }
         }, 300));
     }
+};
+
+export const fetchGoals = async (): Promise<PortalGoal[]> => {
+    try {
+        const headers = getAuthHeaders();
+        if (!headers.Authorization) throw new Error("No token");
+
+        const res = await fetch('/api/portal/goals', { headers, credentials: 'include' });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        return res.json();
+    } catch (e) {
+        console.warn('PORTAL: Goals fetch failed. Using empty set.');
+        return [];
+    }
+};
+
+export const fetchToolLinks = async (): Promise<ToolLinkResponse> => {
+    try {
+        const res = await fetch('/api/portal/tools', {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) throw new Error('Failed to load tool links');
+        return res.json();
+    } catch (e) {
+        console.warn('PORTAL: Tool link fetch failed.', e);
+        return {};
+    }
+};
+
+export const searchPortal = async (query: string): Promise<SearchResponse> => {
+    if (!query.trim()) return { results: [], latencyMs: 0 };
+
+    const start = performance.now();
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    const latencyMs = Math.round(performance.now() - start);
+    return { ...data, latencyMs };
+};
+
+export const fetchStatus = async (): Promise<StatusResponse> => {
+    const res = await fetch('/api/status', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) throw new Error('Status endpoint unavailable');
+    return res.json();
+};
+export const fetchLinearTasks = async (): Promise<LinearTask[]> => {
+    const res = await fetch('/api/linear/tasks', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Linear tasks unavailable');
+    return res.json();
+};
+
+export const fetchNotionPages = async (): Promise<NotionPage[]> => {
+    const res = await fetch('/api/notion/pages', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Notion pages unavailable');
+    return res.json();
+};
+
+export const fetchOrgMatrix = async (): Promise<OrgMatrixRow[]> => {
+    const res = await fetch('/api/org/matrix', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Org matrix unavailable');
+    return res.json();
+};
+
+export interface SsoStartResponse {
+    url: string;
+    state: string;
+    callbackUrl: string;
+}
+
+export const startSso = async (provider: string): Promise<SsoStartResponse> => {
+    const res = await fetch(`/api/sso/start?provider=${encodeURIComponent(provider)}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('SSO start failed');
+    return res.json();
 };

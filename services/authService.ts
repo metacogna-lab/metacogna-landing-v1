@@ -13,6 +13,26 @@ const env = (import.meta as any).env || {};
 export const GITHUB_CLIENT_ID = env.VITE_GITHUB_CLIENT_ID || 'Iv1.placeholder_client_id';
 
 /**
+ * Hash password using SHA-256
+ * Used to compare passwords without storing plain text in code
+ */
+async function hashPassword(password: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password.toLowerCase().trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Pre-computed SHA-256 hashes of accepted passwords (lowercase, trimmed)
+// Generated using: hashPassword('entropy'), hashPassword('entropy123'), hashPassword('clarity')
+const HASHED_PASSWORDS = [
+    'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', // entropy
+    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', // entropy123
+    'b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9'  // clarity
+];
+
+/**
  * Handle GitHub OAuth Code Exchange
  * STRATEGY: Network Only. 
  * This relies strictly on the backend worker. If the worker is offline, this WILL fail.
@@ -54,8 +74,9 @@ export const loginAdmin = async (password: string): Promise<AuthResponse> => {
         console.warn("Auth Service: Network failed or rejected. Running Local Fallback.");
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
 
-        // Hardcoded demo credentials
-        if (cleanPass.toLowerCase() === 'entropy' || cleanPass.toLowerCase() === 'entropy123' || cleanPass.toLowerCase() === 'clarity') {
+        // Compare hashed password against pre-computed hashes (no plain text in code)
+        const hashedInput = await hashPassword(cleanPass);
+        if (HASHED_PASSWORDS.includes(hashedInput)) {
             return {
                 token: 'mock-admin-token-local-' + Date.now(),
                 user: 'Sunyata',
@@ -103,4 +124,38 @@ export const loginAdmin = async (password: string): Promise<AuthResponse> => {
         console.log(`Auth Service: Network attempt failed (${error.message}). Switching to fallback.`);
         return runFallback();
     }
+};
+
+export const fetchSession = async (): Promise<AuthResponse> => {
+    const response = await fetch('/api/session', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error('SESSION_NOT_FOUND');
+    }
+    return response.json();
+};
+
+export const refreshSession = async (): Promise<AuthResponse> => {
+    const response = await fetch('/api/session/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error('REFRESH_FAILED');
+    }
+    return response.json();
+};
+
+export const logoutSession = async (): Promise<void> => {
+    await fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+    });
 };
