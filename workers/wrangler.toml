@@ -24,4 +24,4 @@ id = "b8047f15afdb4aa9ace07c4cc5080c29"
 [[d1_databases]]
 binding = "PORTAL_DB"
 database_name = "metacogna-portal"
-database_id = ""
+database_id = "75e3fd65-a847-4467-8fde-ea1722564167"
