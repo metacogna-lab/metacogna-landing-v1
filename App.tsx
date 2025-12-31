@@ -31,26 +31,34 @@ type RunProject = {
   href: string;
   description: string;
   tagline: string;
+  isTmp?: boolean;
 };
 
 const RUN_PROJECTS: RunProject[] = [
   {
     label: 'Compilar',
     href: 'https://compilar.app',
-    description: 'Rapidly compiles agent pipelines into enterprise-safe workflows with audit trails and deployment handoff.',
-    tagline: 'Turns labyrinthine AI builds into a single satisfyingly green RUN button.',
+    description: 'Analysis and translation of 15 years of social dynamics research and PILAR Theory into a gamified education platform spanning 20 structured datasets.',
+    tagline: 'Takes 15 years of social dynamics research and ships it like a co-op game with cheat codes.',
   },
   {
     label: 'MetaGoal',
     href: 'https://app.metacogna.ai',
-    description: 'Operational cockpit that translates AI bets into measurable OKRs, approvals, and delivery cadences.',
-    tagline: 'Translates AI ambition into one checklist your COO might actually finish.',
+    description: 'A “Metacognitive Agent” that digests your interactions and docs, nudging you toward goals while prep work for external tool hooks continues.',
+    tagline: 'Compresses your second brain into a single “do this next” nudge—no oracle robes required.',
   },
   {
     label: 'Debate Sense (Early Dev)',
     href: 'https://debate-sense-615cf021.base44.app',
-    description: 'Sensemaking stack for argument intelligence so leadership can interrogate tradeoffs in real time.',
-    tagline: 'Lets debating machine philosophers settle it so you get the obvious next move.',
+    description: 'An early prototype AI coach and practice arena following Australian competitive debating standards.',
+    tagline: 'Australian debate prep meets AI coach who’s part judge, part hype squad.',
+  },
+  {
+    label: '/tmp',
+    href: '#',
+    description: 'A rotating lab of agentic experiments poking every edge case we can conjure.',
+    tagline: '🤖 /tmp is a neon-green sandbox where robots learn new party tricks hourly.',
+    isTmp: true,
   },
 ];
 
@@ -130,10 +138,10 @@ const Header: React.FC<{
                     setIsRunMenuOpen(false);
                     onRunProjectSelect(project);
                   }}
-                  className="flex flex-col w-full px-3 py-2 hover:bg-accent/30 transition-colors text-left"
+                  className={`flex flex-col w-full px-3 py-2 transition-colors text-left border-b border-ink/30 last:border-b-0 ${project.isTmp ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'hover:bg-accent/30'}`}
                 >
-                  <span className="text-ink font-semibold">{project.label}</span>
-                  <span className="text-xs text-ink/70">{project.tagline}</span>
+                  <span className={`font-semibold ${project.isTmp ? 'text-white' : 'text-ink'}`}>{project.label}</span>
+                  <span className={`text-xs ${project.isTmp ? 'text-white/90' : 'text-ink/70'}`}>{project.tagline}</span>
                 </button>
               ))}
             </div>
@@ -217,10 +225,10 @@ const Header: React.FC<{
                     setIsMobileMenuOpen(false);
                     onRunProjectSelect(project);
                   }}
-                  className="block w-full px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors text-left"
+                  className={`block w-full px-3 py-2 border-2 border-ink transition-colors text-left ${project.isTmp ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-surface hover:bg-accent/30'}`}
                 >
-                  <div className="text-sm font-semibold">{project.label}</div>
-                  <div className="text-xs text-ink/70">{project.tagline}</div>
+                  <div className={`text-sm font-semibold ${project.isTmp ? 'text-white' : 'text-ink'}`}>{project.label}</div>
+                  <div className={`text-xs ${project.isTmp ? 'text-white/90' : 'text-ink/70'}`}>{project.tagline}</div>
                 </button>
               ))}
             </div>
