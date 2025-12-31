@@ -170,6 +170,7 @@ const DEFAULT_STATUS = [
 ];
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const JWKS_CACHE_TTL_MS = 60 * 60 * 1000;
 
 function hasD1(env) {
   return env.PORTAL_DB && typeof env.PORTAL_DB.prepare === 'function';
@@ -387,6 +388,9 @@ export default {
     const sessionToken = extractToken(request);
     if (sessionToken) {
         userClaims = await verifyJwt(sessionToken, env.JWT_SECRET);
+        if (!userClaims) {
+            userClaims = await verifyCognitoToken(sessionToken, env);
+        }
     }
 
     // Helper to get KV Lists
@@ -443,7 +447,77 @@ export default {
         return payload;
     }
 
-    async function summarizeWebhook(body) {
+const jwksCache = {
+  keys: null,
+  fetchedAt: 0,
+};
+
+function base64UrlToUint8Array(base64UrlString) {
+  const padding = '='.repeat((4 - (base64UrlString.length % 4)) % 4);
+  const base64 = (base64UrlString + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+async function getJwks(env) {
+  if (!env.COGNITO_REGION || !env.COGNITO_USER_POOL_ID) return null;
+  if (jwksCache.keys && Date.now() - jwksCache.fetchedAt < JWKS_CACHE_TTL_MS) {
+    return jwksCache.keys;
+  }
+  const url = `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/${env.COGNITO_USER_POOL_ID}/.well-known/jwks.json`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+  jwksCache.keys = data.keys || [];
+  jwksCache.fetchedAt = Date.now();
+  return jwksCache.keys;
+}
+
+async function verifyCognitoToken(token, env) {
+  try {
+    if (!env.COGNITO_REGION || !env.COGNITO_USER_POOL_ID || !env.COGNITO_CLIENT_ID) return null;
+    const [headerB64, payloadB64, signatureB64] = token.split('.');
+    if (!headerB64 || !payloadB64 || !signatureB64) return null;
+    const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+    if (header.alg !== 'RS256') return null;
+    const keys = await getJwks(env);
+    if (!keys) return null;
+    const jwk = keys.find((key) => key.kid === header.kid);
+    if (!jwk) return null;
+    const cryptoKey = await crypto.subtle.importKey(
+      'jwk',
+      jwk,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    const signature = base64UrlToUint8Array(signatureB64);
+    const verified = await crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5',
+      cryptoKey,
+      signature,
+      new TextEncoder().encode(`${headerB64}.${payloadB64}`)
+    );
+    if (!verified) return null;
+    const iss = `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/${env.COGNITO_USER_POOL_ID}`;
+    if (payload.iss !== iss) return null;
+    if (payload.aud !== env.COGNITO_CLIENT_ID) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) return null;
+    return {
+      sub: payload.sub,
+      role: payload['cognito:groups']?.includes('admin') ? 'admin' : 'associate',
+      email: payload.email,
+      source: 'cognito'
+    };
+  } catch (err) {
+    console.error('Cognito token verification failed', err);
+    return null;
+  }
+}
+
+async function summarizeWebhook(body) {
         if (!env.AI) {
             return `Received webhook payload: ${JSON.stringify(body).slice(0, 1800)}`;
         }
@@ -657,7 +731,6 @@ export default {
 
     // GET /api/status
     if (method === 'GET' && url.pathname === '/api/status') {
-        if (!userClaims) return errorResponse('Unauthorized', 401);
         return jsonResponse({ ingestion: DEFAULT_STATUS });
     }
 

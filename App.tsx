@@ -120,7 +120,7 @@ const Header: React.FC<{
             onFocusCapture={() => setIsRunMenuOpen(true)}
             onBlurCapture={(event) => {
               const nextTarget = event.relatedTarget as Node | null;
-              if (!nextTarget || !event.currentTarget.contains(nextTarget)) {
+              if (nextTarget && !event.currentTarget.contains(nextTarget)) {
                 setIsRunMenuOpen(false);
               }
             }}
@@ -402,11 +402,20 @@ const App: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
         const email = auth.user?.profile?.email || auth.user?.profile?.preferred_username || auth.user?.profile?.sub || 'member';
+        const token = auth.user?.id_token || '';
         setCurrentUser(email);
         setUserRole('associate');
         setCurrentView((view) => view === 'landing' ? 'portal' : view);
+        localStorage.setItem('metacogna_user', email);
+        localStorage.setItem('metacogna_role', 'associate');
+        if (token) {
+            localStorage.setItem('metacogna_token', token);
+        }
     } else if (!auth.isLoading) {
         setCurrentUser(null);
+        localStorage.removeItem('metacogna_user');
+        localStorage.removeItem('metacogna_role');
+        localStorage.removeItem('metacogna_token');
     }
   }, [auth.isAuthenticated, auth.user, auth.isLoading]);
 
@@ -417,6 +426,9 @@ const App: React.FC = () => {
   const handleLogout = () => {
       setCurrentUser(null);
       setCurrentView('landing');
+      localStorage.removeItem('metacogna_user');
+      localStorage.removeItem('metacogna_role');
+      localStorage.removeItem('metacogna_token');
       auth.signoutRedirect();
   };
 
