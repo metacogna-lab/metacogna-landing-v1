@@ -35,6 +35,14 @@ const Header: React.FC<{
     onToggleTheme: () => void;
 }> = ({ onLoginClick, onContactClick, currentView, onChangeView, isDark, onToggleTheme }) => {
   
+  const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const runProjects = [
+    { label: 'Compilar', href: 'https://compilar.app' },
+    { label: 'MetaGoal', href: 'https://app.metacogna.ai' },
+    { label: 'Debate Sense (Early Dev)', href: 'https://debate-sense-615cf021.base44.app' },
+  ];
+
   const isPortal = currentView.startsWith('portal') || currentView === 'decisions';
   const isGallery = currentView === 'gallery';
   const isServices = currentView === 'services';
@@ -65,6 +73,44 @@ const Header: React.FC<{
         </div>
         
         <nav className="hidden md:flex items-center gap-8 font-mono text-sm font-medium text-ink">
+          <div 
+            className="relative"
+            onMouseEnter={() => setIsRunMenuOpen(true)}
+            onMouseLeave={() => setIsRunMenuOpen(false)}
+            onFocusCapture={() => setIsRunMenuOpen(true)}
+            onBlurCapture={(event) => {
+              const nextTarget = event.relatedTarget as Node | null;
+              if (!nextTarget || !event.currentTarget.contains(nextTarget)) {
+                setIsRunMenuOpen(false);
+              }
+            }}
+          >
+            <button
+              onClick={() => setIsRunMenuOpen(!isRunMenuOpen)}
+              className={`uppercase px-3 py-1 border-2 transition-all ${isRunMenuOpen ? 'bg-accent text-ink border-ink font-bold shadow-hard' : 'bg-ink text-paper border-transparent hover:bg-accent hover:text-ink'}`}
+              aria-haspopup="true"
+              aria-expanded={isRunMenuOpen}
+            >
+              ./run.sh
+            </button>
+            <div className={`absolute right-0 mt-2 w-64 bg-paper border-2 border-ink shadow-hard-sm transition-all ${isRunMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+              <div className="px-3 py-2 border-b-2 border-ink text-[0.7rem] tracking-[0.2em] text-ink/70">
+                PROJECTS
+              </div>
+              {runProjects.map((project) => (
+                <a
+                  key={project.label}
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col px-3 py-2 hover:bg-accent/30 transition-colors text-left"
+                >
+                  <span className="text-ink font-semibold">{project.label}</span>
+                  <span className="text-xs text-ink/70">{project.href.replace('https://', '')}</span>
+                </a>
+              ))}
+            </div>
+          </div>
           {!isPortal ? (
              <>
                 <button 
@@ -122,11 +168,71 @@ const Header: React.FC<{
             <button onClick={onToggleTheme} className="text-ink hover:text-accent transition-colors p-1">
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <button className="p-2 hover:bg-surface border border-transparent hover:border-ink transition-all text-ink">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 hover:bg-surface border border-transparent hover:border-ink transition-all text-ink"
+              aria-label="Toggle navigation"
+            >
               <Menu className="w-6 h-6" />
             </button>
         </div>
       </div>
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t-2 border-b-2 border-ink bg-paper px-4 py-6 shadow-hard-sm">
+          <div className="mb-4">
+            <div className="text-[0.65rem] tracking-[0.3em] text-ink/70 mb-2">./run.sh</div>
+            <div className="space-y-2">
+              {runProjects.map((project) => (
+                <a
+                  key={project.label}
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors"
+                >
+                  <div className="text-sm font-semibold">{project.label}</div>
+                  <div className="text-xs text-ink/70">{project.href}</div>
+                </a>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 text-sm font-mono text-ink">
+            {!isPortal ? (
+              <>
+                <button onClick={() => { onChangeView('services'); setIsMobileMenuOpen(false); }} className="text-left uppercase">SERVICES</button>
+                <button onClick={() => { onChangeView('gallery'); setIsMobileMenuOpen(false); }} className="text-left uppercase">PROJECTS</button>
+                {!isGallery && !isServices && (
+                  <>
+                    {ENABLE_METHODOLOGY && (
+                      <button onClick={() => { scrollToSection('methodology'); setIsMobileMenuOpen(false); }} className="text-left uppercase">METHODOLOGY</button>
+                    )}
+                    <button onClick={() => { scrollToSection('about'); setIsMobileMenuOpen(false); }} className="text-left uppercase">ABOUT</button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <button onClick={() => { onChangeView('portal'); setIsMobileMenuOpen(false); }} className="text-left uppercase">DASHBOARD</button>
+                <button onClick={() => { onChangeView('decisions'); setIsMobileMenuOpen(false); }} className="text-left uppercase">DECISION LOG</button>
+              </>
+            )}
+            <button onClick={() => { onContactClick(); setIsMobileMenuOpen(false); }} className="text-left uppercase">CONTACT</button>
+            <div className="flex items-center gap-4 border-t border-ink/40 pt-4">
+              <a href="https://github.com/metacogna-lab" target="_blank" rel="noopener noreferrer" title="Metacogna Lab" className="text-ink hover:text-accent transition-colors">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="https://github.com/PratejraTech" target="_blank" rel="noopener noreferrer" title="Pratejra Tech" className="text-ink hover:text-accent transition-colors">
+                <Github className="w-4 h-4" />
+              </a>
+            </div>
+            {!isPortal && (
+              <PaperButton size="sm" variant="secondary" onClick={() => { setIsMobileMenuOpen(false); onLoginClick(); }}>
+                LOGIN
+              </PaperButton>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };
