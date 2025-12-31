@@ -6,7 +6,6 @@ import Footer from './components/Footer';
 import MethodologySection from './components/MethodologySection';
 import AboutSection from './components/AboutSection';
 import { PaperButton, PaperModal } from './components/PaperComponents';
-import LoginModal from './components/LoginModal';
 import ContactModal from './components/ContactModal';
 import HowWeWorkSection from './components/HowWeWorkSection';
 import RealityAnchor from './components/RealityAnchor';
@@ -14,7 +13,7 @@ import HubspotTerminal from './components/HubspotTerminal';
 import Toast from './components/Toast';
 import { Menu, Github, Loader, Moon, Sun } from 'lucide-react';
 import { UserRole } from './types';
-import { exchangeGithubCode, fetchSession, logoutSession } from './services/authService';
+import { useAuth } from 'react-oidc-context';
 
 // Lazy load portal components to optimize landing page performance
 const PortalDashboard = lazy(() => import('./components/PortalDashboard'));
@@ -297,11 +296,11 @@ const Header: React.FC<{
 type ViewState = 'landing' | 'portal' | 'decisions' | 'gallery' | 'services';
 
 const App: React.FC = () => {
+  const auth = useAuth();
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('associate'); 
   
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   
   // Serious Mode States
@@ -312,10 +311,8 @@ const App: React.FC = () => {
   const [selectedRunProject, setSelectedRunProject] = useState<RunProject | null>(null);
   const [asciiArt, setAsciiArt] = useState('');
 
-  const [isAuthProcessing, setIsAuthProcessing] = useState(false);
-  
-  // Guard to prevent double execution of OAuth callback in React Strict Mode
-  const authCodeProcessed = useRef(false);
+  const isAuthProcessing = auth.isLoading;
+
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
@@ -373,109 +370,54 @@ const App: React.FC = () => {
       setSelectedRunProject(null);
   };
 
-  const handleLoginSuccess = (username: string, role: string, token: string) => {
-      console.log("Login Success:", username, role);
-      
-      // 1. Set Session Storage
-      localStorage.setItem('metacogna_user', username);
-      localStorage.setItem('metacogna_role', role);
-      localStorage.setItem('metacogna_token', token);
-
-      // 2. Update React State
-      setCurrentUser(username);
-      setUserRole(role as UserRole);
-      
-      // 3. Force Navigation & Cleanup
-      // Important: Explicitly set view to portal so Header knows we are in app
-      setCurrentView('portal');
-      setIsLoginOpen(false);
-  };
-
-  const handleGithubCallback = async (code: string) => {
-      setIsAuthProcessing(true);
-      // Clean URL immediately
-      window.history.replaceState({}, document.title, "/");
-      
-      try {
-          const authData = await exchangeGithubCode(code);
-          handleLoginSuccess(authData.user, authData.role, authData.token);
-      } catch (e) {
-          console.error("Auth Failed", e);
-          alert("Authentication Failed: You must be a member of the required organizations.");
-          // Reset processed flag in case of failure so they can try again if they reload with new code
-          authCodeProcessed.current = false; 
-      } finally {
-          setIsAuthProcessing(false);
-      }
+  const handleSsoParams = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const provider = urlParams.get('sso_provider');
+    const state = urlParams.get('state');
+    const status = urlParams.get('sso_status') || 'success';
+    if (!provider || !state) return;
+    try {
+        await fetch(`/api/sso/callback?provider=${encodeURIComponent(provider)}&state=${encodeURIComponent(state)}&status=${encodeURIComponent(status)}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+        setToastMessage(`${provider.toUpperCase()} SSO ${status === 'success' ? 'ready' : 'returned'}`);
+    } catch (err) {
+        setToastMessage(`${provider.toUpperCase()} SSO failed`);
+    } finally {
+        setIsToastVisible(true);
+        urlParams.delete('sso_provider');
+        urlParams.delete('sso_status');
+        urlParams.delete('state');
+        const newSearch = urlParams.toString();
+        const cleanUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
   };
 
   useEffect(() => {
-    // 1. Check for existing session
-    const storedUser = localStorage.getItem('metacogna_user');
-    const storedRole = localStorage.getItem('metacogna_role');
-    const storedToken = localStorage.getItem('metacogna_token');
-
-    if (storedUser && storedToken) {
-        setCurrentUser(storedUser);
-        setUserRole((storedRole as UserRole) || 'associate');
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-
-    if (code && !authCodeProcessed.current) {
-        authCodeProcessed.current = true;
-        handleGithubCallback(code);
-    }
-
-    const resumeSession = async () => {
-        try {
-            const session = await fetchSession();
-            localStorage.setItem('metacogna_user', session.user);
-            localStorage.setItem('metacogna_role', session.role);
-            localStorage.setItem('metacogna_token', session.token);
-            setCurrentUser(session.user);
-            setUserRole(session.role as UserRole);
-        } catch (err) {
-            // No active cookie-backed session
-        }
-    };
-
-    const handleSsoParams = async () => {
-        const provider = urlParams.get('sso_provider');
-        const state = urlParams.get('state');
-        const status = urlParams.get('sso_status') || 'success';
-        if (!provider || !state) return;
-        try {
-            await fetch(`/api/sso/callback?provider=${encodeURIComponent(provider)}&state=${encodeURIComponent(state)}&status=${encodeURIComponent(status)}`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-            setToastMessage(`${provider.toUpperCase()} SSO ${status === 'success' ? 'ready' : 'returned'}`);
-        } catch (err) {
-            setToastMessage(`${provider.toUpperCase()} SSO failed`);
-        } finally {
-            setIsToastVisible(true);
-            urlParams.delete('sso_provider');
-            urlParams.delete('sso_status');
-            urlParams.delete('state');
-            const newSearch = urlParams.toString();
-            const cleanUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`;
-            window.history.replaceState({}, document.title, cleanUrl);
-        }
-    };
-
-    resumeSession();
     handleSsoParams();
   }, []);
+
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+        const email = auth.user?.profile?.email || auth.user?.profile?.preferred_username || auth.user?.profile?.sub || 'member';
+        setCurrentUser(email);
+        setUserRole('associate');
+        setCurrentView((view) => view === 'landing' ? 'portal' : view);
+    } else if (!auth.isLoading) {
+        setCurrentUser(null);
+    }
+  }, [auth.isAuthenticated, auth.user, auth.isLoading]);
+
+  const handleLogin = () => {
+      auth.signinRedirect();
+  };
 
   const handleLogout = () => {
       setCurrentUser(null);
       setCurrentView('landing');
-      localStorage.removeItem('metacogna_user');
-      localStorage.removeItem('metacogna_role');
-      localStorage.removeItem('metacogna_token');
-      logoutSession().catch(() => {});
+      auth.signoutRedirect();
   };
 
   const runProjectModal = (
@@ -535,7 +477,7 @@ const App: React.FC = () => {
       return (
         <div className="min-h-screen bg-surface">
              <Header 
-                onLoginClick={() => {}} 
+                onLoginClick={handleLogin} 
                 onLogoutClick={handleLogout}
                 onContactClick={() => setIsContactOpen(true)} 
                 currentView={currentView}
@@ -573,7 +515,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col text-ink font-sans selection:bg-accent selection:text-ink transition-colors duration-300">
       <Header 
-        onLoginClick={() => setIsLoginOpen(true)} 
+        onLoginClick={handleLogin} 
         onLogoutClick={handleLogout}
         onContactClick={() => setIsContactOpen(true)} 
         currentView={currentView}
@@ -585,11 +527,6 @@ const App: React.FC = () => {
         isAuthenticated={!!currentUser}
       />
       
-      <LoginModal 
-        isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)} 
-        onLoginSuccess={handleLoginSuccess}
-      />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
       {runProjectModal}
 

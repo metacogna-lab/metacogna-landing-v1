@@ -30,19 +30,25 @@ const PortalDashboard: React.FC<PortalDashboardProps> = ({ user, role, onLogout 
     const [orgMatrix, setOrgMatrix] = useState<OrgMatrixRow[]>([]);
     const [ssoLoading, setSsoLoading] = useState<string | null>(null);
     const [ssoMessage, setSsoMessage] = useState<string | null>(null);
+    const [linearError, setLinearError] = useState<string | null>(null);
+    const [notionError, setNotionError] = useState<string | null>(null);
 
     // Load Data
     const loadData = async () => {
         setLoading(true);
+        setLinearError(null);
+        setNotionError(null);
         const [allData, goalData, taskData, pageData, matrixData] = await Promise.all([
             fetchUpdates(),
             fetchGoals(),
             fetchLinearTasks().catch((err) => {
                 console.warn('PORTAL: linear tasks failed', err);
+                setLinearError('Set LINEAR_API_KEY via wrangler vars to sync work queue.');
                 return [];
             }),
             fetchNotionPages().catch((err) => {
                 console.warn('PORTAL: notion pages failed', err);
+                setNotionError('Provide NOTION_API_KEY + NOTION_DATABASE_ID to surface briefs here.');
                 return [];
             }),
             fetchOrgMatrix().catch((err) => {
@@ -283,6 +289,9 @@ const PortalDashboard: React.FC<PortalDashboardProps> = ({ user, role, onLogout 
                             {ssoMessage && (
                                 <p className="mt-2 font-mono text-[0.65rem] text-gray-600">{ssoMessage}</p>
                             )}
+                            {!toolLinks?.linear && !toolLinks?.notion && !toolLinks?.github && (
+                                <p className="mt-1 font-mono text-[0.6rem] text-amber-600">Add SSO targets via wrangler vars once Cognito is ready.</p>
+                            )}
                         </div>
                     </div>
                     {portalStatus?.ingestion && (
@@ -507,7 +516,9 @@ const PortalDashboard: React.FC<PortalDashboardProps> = ({ user, role, onLogout 
                             <span className="font-mono text-xs text-gray-500">{linearTasks.length} tracked</span>
                         </div>
                         <div className="divide-y divide-dashed divide-ink/30">
-                            {linearTasks.length === 0 ? (
+                            {linearError ? (
+                                <div className="p-6 text-sm font-mono text-amber-600">{linearError}</div>
+                            ) : linearTasks.length === 0 ? (
                                 <div className="p-6 text-sm font-mono text-gray-500">No open tasks pulled from Linear.</div>
                             ) : (
                                 linearTasks.slice(0, 6).map(task => (
@@ -542,7 +553,9 @@ const PortalDashboard: React.FC<PortalDashboardProps> = ({ user, role, onLogout 
                             <span className="font-mono text-xs text-gray-500">{notionPages.length} entries</span>
                         </div>
                         <div className="divide-y divide-dashed divide-ink/30">
-                            {notionPages.length === 0 ? (
+                            {notionError ? (
+                                <div className="p-6 text-sm font-mono text-amber-600">{notionError}</div>
+                            ) : notionPages.length === 0 ? (
                                 <div className="p-6 text-sm font-mono text-gray-500">No recent Notion pages synced.</div>
                             ) : (
                                 notionPages.slice(0, 6).map(page => (

@@ -9,7 +9,7 @@ const INITIAL_PROJECTS: Project[] = [
     id: 'compilar',
     title: 'Compilar',
     description: 'A structured analysis and graphical representation of over 20 years of research into group dynamics, grounded in PILAR theory. Compilar makes invisible coordination forces visible—without prescribing how groups should behave.',
-    status: 'beta',
+    status: 'active',
     tags: ['Sociology', 'Graph Theory', 'PILAR'],
     githubUrl: 'https://github.com/metacogna-lab/compilar'
   },
@@ -28,6 +28,30 @@ const INITIAL_PROJECTS: Project[] = [
     status: 'active',
     tags: ['Human', 'Memory', 'Legacy'],
     webUrl: 'https://timelesslove.ai'
+  },
+  {
+    id: 'parit',
+    title: 'Parit',
+    description: 'Architecture orchestration for impatient operators. Parit chains linear and looping agency to spit out architectures, PRDs, and governance notes before your founding team finishes describing the problem.',
+    status: 'active',
+    tags: ['Architecture', 'Agents', 'Execution'],
+    webUrl: 'https://parit.metacogna.ai'
+  },
+  {
+    id: 'aware',
+    title: 'Aware',
+    description: 'A metacognitive mirror that quietly watches how you chase goals. It hoards three layers of memory, compares intent to action, and nudges you when your daily habits gaslight your roadmap.',
+    status: 'beta',
+    tags: ['Metacognition', 'Memory', 'Coaching'],
+    webUrl: 'https://app.metacogna.ai'
+  },
+  {
+    id: 'debate-sense',
+    title: 'Debate Sense',
+    description: 'A debating dojo built on Australian competition rules. You argue with machine judges, log tactics, and leave with punchlines ready for boardrooms or barbecues.',
+    status: 'concept',
+    tags: ['Rhetoric', 'AI Coach', 'Playground'],
+    webUrl: 'https://debate-sense-615cf021.base44.app'
   }
 ];
 
