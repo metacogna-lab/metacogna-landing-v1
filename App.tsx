@@ -5,7 +5,7 @@ import ProjectGrid from './components/ProjectGrid';
 import Footer from './components/Footer';
 import MethodologySection from './components/MethodologySection';
 import AboutSection from './components/AboutSection';
-import { PaperButton } from './components/PaperComponents';
+import { PaperButton, PaperModal } from './components/PaperComponents';
 import LoginModal from './components/LoginModal';
 import ContactModal from './components/ContactModal';
 import HowWeWorkSection from './components/HowWeWorkSection';
@@ -26,6 +26,30 @@ const ServicesBase = lazy(() => import('./components/ServicesBase'));
 const ENABLE_PROJECT_GRID = (import.meta as any).env?.VITE_ENABLE_PROJECT_GRID !== 'false';
 const ENABLE_METHODOLOGY = (import.meta as any).env?.VITE_ENABLE_METHODOLOGY !== 'false';
 
+type RunProject = {
+  label: string;
+  href: string;
+  description: string;
+};
+
+const RUN_PROJECTS: RunProject[] = [
+  {
+    label: 'Compilar',
+    href: 'https://compilar.app',
+    description: 'Rapidly compiles agent pipelines into enterprise-safe workflows with audit trails and deployment handoff.',
+  },
+  {
+    label: 'MetaGoal',
+    href: 'https://app.metacogna.ai',
+    description: 'Operational cockpit that translates AI bets into measurable OKRs, approvals, and delivery cadences.',
+  },
+  {
+    label: 'Debate Sense (Early Dev)',
+    href: 'https://debate-sense-615cf021.base44.app',
+    description: 'Sensemaking stack for argument intelligence so leadership can interrogate tradeoffs in real time.',
+  },
+];
+
 const Header: React.FC<{ 
     onLoginClick: () => void; 
     onContactClick: () => void;
@@ -33,15 +57,12 @@ const Header: React.FC<{
     onChangeView: (v: any) => void;
     isDark: boolean;
     onToggleTheme: () => void;
-}> = ({ onLoginClick, onContactClick, currentView, onChangeView, isDark, onToggleTheme }) => {
+    runProjects: RunProject[];
+    onRunProjectSelect: (project: RunProject) => void;
+}> = ({ onLoginClick, onContactClick, currentView, onChangeView, isDark, onToggleTheme, runProjects, onRunProjectSelect }) => {
   
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const runProjects = [
-    { label: 'Compilar', href: 'https://compilar.app' },
-    { label: 'MetaGoal', href: 'https://app.metacogna.ai' },
-    { label: 'Debate Sense (Early Dev)', href: 'https://debate-sense-615cf021.base44.app' },
-  ];
 
   const isPortal = currentView.startsWith('portal') || currentView === 'decisions';
   const isGallery = currentView === 'gallery';
@@ -98,16 +119,18 @@ const Header: React.FC<{
                 PROJECTS
               </div>
               {runProjects.map((project) => (
-                <a
+                <button
                   key={project.label}
-                  href={project.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col px-3 py-2 hover:bg-accent/30 transition-colors text-left"
+                  type="button"
+                  onClick={() => {
+                    setIsRunMenuOpen(false);
+                    onRunProjectSelect(project);
+                  }}
+                  className="flex flex-col w-full px-3 py-2 hover:bg-accent/30 transition-colors text-left"
                 >
                   <span className="text-ink font-semibold">{project.label}</span>
                   <span className="text-xs text-ink/70">{project.href.replace('https://', '')}</span>
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -183,16 +206,18 @@ const Header: React.FC<{
             <div className="text-[0.65rem] tracking-[0.3em] text-ink/70 mb-2">./run.sh</div>
             <div className="space-y-2">
               {runProjects.map((project) => (
-                <a
+                <button
                   key={project.label}
-                  href={project.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors"
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onRunProjectSelect(project);
+                  }}
+                  className="block w-full px-3 py-2 border-2 border-ink bg-surface hover:bg-accent/30 transition-colors text-left"
                 >
                   <div className="text-sm font-semibold">{project.label}</div>
                   <div className="text-xs text-ink/70">{project.href}</div>
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -250,6 +275,9 @@ const App: React.FC = () => {
   // Serious Mode States
   const [isHubspotOpen, setIsHubspotOpen] = useState(false);
   const [isToastVisible, setIsToastVisible] = useState(false);
+  const [isRunModalOpen, setIsRunModalOpen] = useState(false);
+  const [selectedRunProject, setSelectedRunProject] = useState<RunProject | null>(null);
+  const [asciiArt, setAsciiArt] = useState('');
 
   const [isAuthProcessing, setIsAuthProcessing] = useState(false);
   
@@ -281,8 +309,36 @@ const App: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentView]);
+  
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/ascii-metacogna.txt')
+      .then((res) => res.text())
+      .then((text) => {
+        if (isMounted) {
+          setAsciiArt(text);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAsciiArt('METACOGNA LAB');
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const toggleTheme = () => setIsDark(!isDark);
+  const handleRunProjectSelect = (project: RunProject) => {
+      setSelectedRunProject(project);
+      setIsRunModalOpen(true);
+  };
+
+  const closeRunModal = () => {
+      setIsRunModalOpen(false);
+      setSelectedRunProject(null);
+  };
 
   const handleLoginSuccess = (username: string, role: string, token: string) => {
       console.log("Login Success:", username, role);
@@ -352,6 +408,48 @@ const App: React.FC = () => {
       localStorage.removeItem('metacogna_token');
   };
 
+  const runProjectModal = (
+      <PaperModal 
+        isOpen={isRunModalOpen && !!selectedRunProject}
+        onClose={closeRunModal}
+        title="./run.sh"
+        maxWidth="max-w-2xl"
+      >
+        {selectedRunProject && (
+          <div className="flex flex-col gap-4">
+            <pre className="font-mono text-xs md:text-sm text-emerald-400 leading-tight whitespace-pre overflow-auto border-2 border-ink bg-paper shadow-hard-sm p-4">
+              {asciiArt}
+            </pre>
+            <div className="space-y-2">
+              <p className="font-mono text-[0.65rem] tracking-[0.3em] text-ink/60">PROJECT BRIEF</p>
+              <h3 className="text-2xl font-serif text-ink">{selectedRunProject.label}</h3>
+              <p className="text-sm text-ink/80 leading-relaxed">
+                {selectedRunProject.description}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a 
+                href={selectedRunProject.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 font-bold font-sans border-2 border-ink bg-ink text-paper hover:bg-accent hover:text-ink transition-colors shadow-hard px-5 py-2.5 text-center uppercase tracking-wide"
+              >
+                Launch Project
+              </a>
+              <PaperButton 
+                variant="secondary" 
+                size="md" 
+                className="flex-1"
+                onClick={closeRunModal}
+              >
+                Close
+              </PaperButton>
+            </div>
+          </div>
+        )}
+      </PaperModal>
+  );
+
   if (isAuthProcessing) {
       return (
           <div className="min-h-screen flex items-center justify-center bg-surface flex-col gap-4">
@@ -373,6 +471,8 @@ const App: React.FC = () => {
                 onChangeView={setCurrentView}
                 isDark={isDark}
                 onToggleTheme={toggleTheme}
+                runProjects={RUN_PROJECTS}
+                onRunProjectSelect={handleRunProjectSelect}
              />
              <main className="pt-16">
                  <Suspense fallback={
@@ -389,12 +489,13 @@ const App: React.FC = () => {
                          // Default to dashboard for any other view when logged in
                          <PortalDashboard user={currentUser} role={userRole} onLogout={handleLogout} />
                      )}
-                 </Suspense>
-             </main>
-             <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
-        </div>
-      );
-  }
+             </Suspense>
+         </main>
+         <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+         {runProjectModal}
+    </div>
+  );
+}
 
   // --- Render Public Views (Landing / Gallery / Services) ---
   return (
@@ -406,6 +507,8 @@ const App: React.FC = () => {
         onChangeView={setCurrentView}
         isDark={isDark}
         onToggleTheme={toggleTheme}
+        runProjects={RUN_PROJECTS}
+        onRunProjectSelect={handleRunProjectSelect}
       />
       
       <LoginModal 
@@ -414,6 +517,7 @@ const App: React.FC = () => {
         onLoginSuccess={handleLoginSuccess}
       />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      {runProjectModal}
 
       {/* Serious Mode Components */}
       <HubspotTerminal 
