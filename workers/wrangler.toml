@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2024-06-08"
 
 [env]
-route = "kv.metacogna.ai/*"
+route = "api-landing.metacogna.ai/*"
 
 
 [vars]
@@ -22,5 +22,5 @@ binding = "PORTAL_DB"
 database_name = "metacogna-portal"
 database_id = "507bfe41-6173-4ab7-915a-022133b76117"
 
-[ai]
+[ai] 
 binding = "AI"

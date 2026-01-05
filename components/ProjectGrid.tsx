@@ -31,8 +31,8 @@ const INITIAL_PROJECTS: Project[] = [
   },
   {
     id: 'parit',
-    title: 'Parit',
-    description: 'Architecture orchestration for impatient operators. Parit chains linear and looping agency to spit out architectures, PRDs, and governance notes before your founding team finishes describing the problem.',
+    title: 'Parti',
+    description: 'Architecture orchestration for impatient operators. Parti chains linear and looping agency to spit out architectures, PRDs, and governance notes before your founding team finishes describing the problem.',
     status: 'active',
     tags: ['Architecture', 'Agents', 'Execution'],
     webUrl: 'https://parit.metacogna.ai'
